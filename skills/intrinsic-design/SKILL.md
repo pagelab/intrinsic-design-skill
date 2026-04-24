@@ -1,26 +1,42 @@
 ---
 name: intrinsic-design
-description: 'CRITICAL CSS SKILL: Use this whenever you are writing or reviewing CSS layouts, making components responsive, or the user mentions fluid typography, responsive grids, breakpoints, container queries (@container), clamp(), minmax(), or intrinsic design. You must use this skill to apply modern breakpoint-free CSS layout techniques (auto-fit, flex-wrap, cqi container units, fluid values) instead of standard @media max-width queries. Also use when adding device/accessibility preferences like pointer, hover, or prefers-reduced-motion. Do NOT use for Tailwind configurations, HTML image optimization, or basic CSS alignment bugs.'
+description: "CRITICAL CSS SKILL: Use this whenever you are writing or reviewing CSS layouts, making components responsive, or the user mentions wanting fluid typography, responsive grids without breakpoints, avoiding media queries, container queries (@container), clamp(), minmax(), intrinsic design, or content-out layout. You MUST use this skill anytime a user asks to make elements 'adapt by themselves', 'fit as many as possible', grow/shrink 'smoothly' without jumping, or size things relative to a parent container rather than the viewport. It applies modern content-out CSS layout techniques (auto-fit, flex-wrap, cqi units, fluid values) where content dictates the layout instead of viewport breakpoints. Also use when adding accessibility preferences like prefers-reduced-motion. Do NOT use for Tailwind configurations, HTML image optimization, or basic CSS alignment bugs."
 ---
 
-# Intrinsic Design — Breakpoint-Free CSS Layout
+# Intrinsic Design — Content-Out CSS Layout
 
-Build responsive interfaces where components adapt to their context by default, without relying on viewport breakpoints as the primary layout engine. Media queries are reserved for device capabilities and user preferences only.
+The concept of **Intrinsic Web Design** was introduced by [Jen Simmons](https://www.youtube.com/layoutland) as a fundamental shift in how we think about responsive layout. Rather than imposing structure from outside (viewport breakpoints), intrinsic design lets the **content itself dictate the layout** — its natural size, aspect ratio, quantity, and context become the primary inputs for layout decisions.
 
-## Core Philosophy
+The absence of media query breakpoints is a *consequence* of this approach, not its goal. When you design from the content outward, breakpoints become unnecessary for most layout work because the layout is already responding to the right signals.
 
-> **Responsive design is moving from breakpoint choreography to intent-driven systems.**
+This skill encodes that philosophy into concrete CSS patterns, drawing on [Amit Sheen's technical implementation](https://frontendmasters.com/blog/building-a-ui-without-breakpoints/) for the Frontend Masters blog.
 
-Breakpoints were an excellent answer when multiple screen sizes emerged, but modern interfaces are component-first, nested, and reused across wildly different contexts. Global viewport width is frequently the wrong input for local layout decisions.
+## The Mindset Shift
 
-This skill implements a **four-method approach** that makes viewport breakpoints optional:
+Traditional responsive design asks: **"How wide is the viewport?"** and then dictates what the layout should look like at that width. Intrinsic design asks a fundamentally different question: **"What does this content need?"**
 
-| Method | Purpose | Replaces |
+This shift has three dimensions:
+
+### Content-out, not viewport-in
+
+Start every layout decision from the content. A card grid doesn't "become 3 columns at 1024px" — instead, its cards have a minimum readable width (say, 300px), and the browser fits as many as the available space allows. The column count is a *result*, never an input.
+
+### Intrinsic properties as layout inputs
+
+The natural characteristics of your content — text length, image aspect ratio, number of items, minimum readable size — are the real inputs to your layout system. When you encode these as constraints (`minmax()`, `flex-basis`, `clamp()`), the browser can make continuously correct layout decisions without you specifying every breakpoint.
+
+### Breakpoints as a code smell
+
+If you find yourself writing 3-4 `@media` blocks to manage a single component, that's a signal you're imposing structure from outside. The fix isn't better breakpoints — it's rethinking the layout so the component can find its own shape.
+
+This skill implements a **four-method approach** to make this philosophy concrete:
+
+| Method | Purpose | Enables |
 |--------|---------|----------|
-| **Intrinsic Layouts** | Structure adapts continuously | Fixed column counts at breakpoints |
-| **Fluid Values** | Scale smoothly between min/max | Stepped size changes at breakpoints |
-| **Container Units** | Size relative to component, not viewport | Viewport-relative sizing in components |
-| **Container Queries** | Structural shifts at component level | Structural shifts at viewport level |
+| **Intrinsic Layouts** | Structure adapts to content | Content finds its own column count |
+| **Fluid Values** | Sizing scales continuously | Values respond proportionally to context |
+| **Container Units** | Sizing relative to component | Components own their proportions |
+| **Container Queries** | Structural shifts at component level | Components adapt to their actual space |
 
 **@media queries** are reserved exclusively for:
 - Device capabilities (`hover`, `pointer`, `display-mode`, `update`, `scripting`)
@@ -33,6 +49,22 @@ This skill implements a **four-method approach** that makes viewport breakpoints
 - Refactoring breakpoint-heavy CSS to intrinsic patterns
 - Creating reusable components that must work in sidebars, modals, feeds, and dashboards
 - Any time layout decisions are being made with `@media (min-width)` or `@media (max-width)`
+
+## Design Thinking Process
+
+Before writing any CSS, walk through these three steps:
+
+### Step 1: Observe the content
+
+What are the natural dimensions of this content? What's the minimum width where text remains readable? What aspect ratios do images have? How many items are typical? These observations become your layout constraints.
+
+### Step 2: Declare intentions, not dimensions
+
+Instead of "3 columns on desktop, 1 on mobile," say: "Cards with a minimum width of 300px that fill the available space." Instead of "font-size: 24px on desktop, 16px on mobile," say: "Font size between 16px and 24px, scaling fluidly with the context."
+
+### Step 3: Test in contexts, not viewports
+
+Don't just resize your browser window. Place the same component in a sidebar (250px), a modal (500px), a main content area (800px), and a full-width hero. If it works in all of them without changes, your design is truly intrinsic.
 
 ## Method 1: Intrinsic Layouts First
 
@@ -381,7 +413,7 @@ When refactoring existing CSS to intrinsic design:
 
 ## Decision Flowchart
 
-When writing new CSS, follow this decision path:
+When writing new CSS, start by observing the content's intrinsic properties (natural size, aspect ratio, minimum readable width, item count). Then follow this decision path:
 
 ```
 Is this a layout/grid decision?
@@ -417,9 +449,17 @@ When reviewing code, flag these patterns for refactoring:
 | `@media` for hover effects | `@media (hover: hover)` |
 | Animations without motion preference check | `@media (prefers-reduced-motion: no-preference)` |
 
+## Browser Support & Validation
+
+The modern CSS techniques advocated in this skill (including Container Queries, `clamp()`, `minmax()`, viewport inline units `vi`, and interaction media queries) have been validated against current `caniuse` data and are **safe for modern production web development**. 
+
+All core features have reached *Baseline: Widely Available* status across all major browsers (Chrome, Safari, Firefox, Edge, iOS, Android), with the newest features like Container Size Queries and units (`cqi`) being fully supported since late 2022/early 2023. You do not need to provide polyfills or fallback viewport-width `@media` queries when using these intrinsic layout patterns.
+
 ## References
 
-- [Building a UI Without Breakpoints — Frontend Masters](https://frontendmasters.com/blog/building-a-ui-without-breakpoints/) by Amit Sheen
+- [Jen Simmons — Intrinsic Web Design](https://aneventapart.com/news/post/designing-intrinsic-layouts-aea-video) (An Event Apart, 2018) — where the concept originated
+- [Jen Simmons — Layout Land](https://www.youtube.com/layoutland) — foundational concepts and demonstrations
+- [Building a UI Without Breakpoints — Frontend Masters](https://frontendmasters.com/blog/building-a-ui-without-breakpoints/) by Amit Sheen — technical implementation this skill is built on
 - [Modern Fluid Typography with clamp() — Smashing Magazine](https://www.smashingmagazine.com/2022/01/modern-fluid-typography-css-clamp/)
 - [Container Queries — MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_size_and_style_queries)
 - [@media Reference — MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media)
